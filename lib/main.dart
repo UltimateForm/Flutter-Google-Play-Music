@@ -1,7 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'infiniteScrollList.dart';
-import 'stackShit.dart';
-import 'widgetsIntro.dart';
-import 'googleplaymusic.dart';
+import 'package:flutter_app/googlePlayMusic/App.dart';
 
-void main() => runApp(Entry());
+void main() => runApp(App());
