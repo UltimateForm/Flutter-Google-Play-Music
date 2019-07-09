@@ -1,49 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app/googlePlayMusic/Drawer.dart';
 import 'package:flute_music_player/flute_music_player.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 
 class ListenNow extends StatefulWidget {
   @override
   State createState() => new ListenNowState();
 }
 
+class CustomSearchDelegate extends SearchDelegate {
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    // TODO: implement buildActions
+    return null;
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    // TODO: implement buildLeading
+    return null;
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    // TODO: implement buildResults
+    return null;
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    // TODO: implement buildSuggestions
+    return null;
+  }
+}
+
 class ListenNowState extends State<ListenNow> {
   MusicFinder player;
-  List<Song> songs;
-  Future initPlayer() async {
-    List<Song> _songs;
-    try {
-      _songs = await MusicFinder.allSongs();
-    } catch (e) {
-      print("Couldnt get songs " + e.toString());
-    }
+
+  void initPlayer() {
     setState(() {
-      songs = _songs;
       player = MusicFinder();
     });
   }
 
   @override
   void initState() {
-    initPlayer();
     super.initState();
+    initPlayer();
   }
 
   @override
   Widget build(BuildContext context) {
-    final songTiles = <Widget>[];
-    if (songs != null) {
-      print("Here");
-      songTiles.addAll(songs.map((s) => ListTile(
-            title: Text(s.title),
-            leading: Icon(Icons.music_note),
-            onTap: () {
-              print("tapped " + s.uri);
-              player.stop();
-              player.play(s.uri, isLocal: true);
-            },
-          )));
-    }
     return Scaffold(
         appBar: AppBar(
           leading: Builder(
@@ -56,13 +63,24 @@ class ListenNowState extends State<ListenNow> {
           actions: <Widget>[
             IconButton(
               icon: Icon(Icons.search),
-              onPressed: () => {},
+              onPressed: () => showSearch(context: context, delegate:CustomSearchDelegate()),
             )
           ],
         ),
         drawer: Drawer(child: MyDrawer()),
-        body: ListView(
-          children: songTiles,
-        ));
+        body: StoreConnector<List<Song>, List<Widget>>(
+            converter: (store) => store.state
+                .map((s) => ListTile(
+                      title: Text(s.title),
+                      leading: Icon(Icons.music_note),
+                      onTap: () {
+                        player.stop();
+                        player.play(s.uri, isLocal: true);
+                      },
+                    ))
+                .toList(),
+            builder: (context, viewModel) {
+              return Scrollbar(child: ListView(children: viewModel));
+            }));
   }
 }
