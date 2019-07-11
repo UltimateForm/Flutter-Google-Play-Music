@@ -65,10 +65,10 @@ class App extends StatelessWidget {
           title: title,
           theme: ThemeData(primaryColor: Colors.deepOrange),
           routes: {
-            "listenNow": (BuildContext context) => ListenNow(),
+            "listenNow": (BuildContext context) => ListenNow(songstore.state),
             "recents": (BuildContext context) => Recents()
           },
-          home: ListenNow(),
+          home: ListenNow(songstore.state),
         ));
   }
 }

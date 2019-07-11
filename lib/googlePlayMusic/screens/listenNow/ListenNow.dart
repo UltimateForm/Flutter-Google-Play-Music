@@ -2,13 +2,60 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/googlePlayMusic/Drawer.dart';
 import 'package:flute_music_player/flute_music_player.dart';
 import 'package:flutter_redux/flutter_redux.dart';
+import 'package:queries/collections.dart';
 
 class ListenNow extends StatefulWidget {
+  List<Song> songs;
+  ListenNow(this.songs) : super();
+
   @override
   State createState() => new ListenNowState();
 }
 
-class CustomSearchDelegate extends SearchDelegate {
+class _SuggestionList extends StatelessWidget {
+  const _SuggestionList({this.suggestions, this.query, this.onSelected});
+
+  final List<String> suggestions;
+  final String query;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return ListView.builder(
+      itemCount: suggestions.length,
+      itemBuilder: (BuildContext context, int i) {
+        final String suggestion = suggestions[i];
+        return ListTile(
+          leading: query.isEmpty ? const Icon(Icons.history) : const Icon(null),
+          title: RichText(
+            text: TextSpan(
+              text: suggestion.substring(0, query.length),
+              style:
+                  theme.textTheme.subhead.copyWith(fontWeight: FontWeight.bold),
+              children: <TextSpan>[
+                TextSpan(
+                  text: suggestion.substring(query.length),
+                  style: theme.textTheme.subhead,
+                ),
+              ],
+            ),
+          ),
+          onTap: () {
+            onSelected(suggestion);
+          },
+        );
+      },
+    );
+  }
+}
+
+class SearchSong extends SearchDelegate<Song> {
+  final List<Song> _data;
+  // final List<Song> _history = []
+
+  SearchSong(this._data) : super();
+
   @override
   List<Widget> buildActions(BuildContext context) {
     // TODO: implement buildActions
@@ -17,26 +64,67 @@ class CustomSearchDelegate extends SearchDelegate {
 
   @override
   Widget buildLeading(BuildContext context) {
-    // TODO: implement buildLeading
-    return null;
+    return IconButton(
+      tooltip: "Back",
+      icon: AnimatedIcon(
+          icon: AnimatedIcons.menu_arrow, progress: transitionAnimation),
+      onPressed: () {
+        close(context, null);
+      },
+    );
   }
 
   @override
   Widget buildResults(BuildContext context) {
-    // TODO: implement buildResults
-    return null;
+    List<Song> results = _data.where((s) {
+      return s.title == query ||
+          s.title.startsWith(query) ||
+          s.album == query ||
+          s.album.startsWith(query) ||
+          s.artist == query ||
+          s.artist.startsWith(query);
+    }).toList();
+
+    return ListView(
+      children: results
+          .map<Widget>((r) => ListTile(
+                title: Text(r.title),
+                subtitle: Text(r.artist),
+                leading: Icon(Icons.search),
+                onTap: () {},
+              ))
+          .toList(),
+    );
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    // TODO: implement buildSuggestions
-    return null;
+    final Iterable<String> suggestions = query.isEmpty
+        ? []
+        : _data
+            .where((s) =>
+                s.title.startsWith(query) ||
+                s.artist.startsWith(query) ||
+                s.album.startsWith(query))
+            .map((so) {
+            if (so.title.startsWith(query)) return so.title;
+            if (so.artist.startsWith(query)) return so.artist;
+            if (so.album.startsWith(query)) return so.album;
+          }).toSet().toList();
+    return _SuggestionList(
+      query: query,
+      suggestions: suggestions,
+      onSelected: (sug) {
+        query = sug;
+        showResults(context);
+      },
+    );
   }
 }
 
 class ListenNowState extends State<ListenNow> {
   MusicFinder player;
-
+  SearchSong _delegate;
   void initPlayer() {
     setState(() {
       player = MusicFinder();
@@ -46,7 +134,13 @@ class ListenNowState extends State<ListenNow> {
   @override
   void initState() {
     super.initState();
+    _delegate = SearchSong(widget.songs);
     initPlayer();
+  }
+
+  void playSong(Song song) {
+    player.stop();
+    player.play(song.uri, isLocal: true);
   }
 
   @override
@@ -55,7 +149,9 @@ class ListenNowState extends State<ListenNow> {
         appBar: AppBar(
           leading: Builder(
             builder: (context) => IconButton(
-                  icon: new Icon(Icons.menu),
+                  icon: AnimatedIcon(
+                      icon: AnimatedIcons.menu_arrow,
+                      progress: _delegate.transitionAnimation),
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
           ),
@@ -63,7 +159,11 @@ class ListenNowState extends State<ListenNow> {
           actions: <Widget>[
             IconButton(
               icon: Icon(Icons.search),
-              onPressed: () => showSearch(context: context, delegate:CustomSearchDelegate()),
+              onPressed: () async {
+                final Song result = await showSearch<Song>(
+                    context: context, delegate: _delegate);
+                if (result != null) playSong(result);
+              },
             )
           ],
         ),
@@ -72,11 +172,9 @@ class ListenNowState extends State<ListenNow> {
             converter: (store) => store.state
                 .map((s) => ListTile(
                       title: Text(s.title),
+                      subtitle: Text(s.artist),
                       leading: Icon(Icons.music_note),
-                      onTap: () {
-                        player.stop();
-                        player.play(s.uri, isLocal: true);
-                      },
+                      onTap: () => playSong(s),
                     ))
                 .toList(),
             builder: (context, viewModel) {
