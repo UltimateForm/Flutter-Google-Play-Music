@@ -41,9 +41,17 @@ class HolyButton extends StatelessWidget {
   }
 }
 
+class AlbumData {
+  final String artist;
+  final String albumName;
+  final String albumArt;
+  AlbumData(this.artist, this.albumName, this.albumArt);
+}
+
 class ListenNowState extends State<ListenNow> {
   MusicFinder player;
   SearchSong _delegate;
+  List<AlbumData> albums = List<AlbumData>();
   void initPlayer() {
     setState(() {
       player = MusicFinder();
@@ -54,6 +62,12 @@ class ListenNowState extends State<ListenNow> {
   void initState() {
     super.initState();
     _delegate = SearchSong(widget.songs);
+    widget.songs.forEach((s) {
+      if (s.album == null || s.album.isEmpty) return;
+      if (albums.any((a) => s.album == a.albumName)) return;
+      AlbumData adata = AlbumData(s.artist, s.album, s.albumArt);
+      albums.add(adata);
+    });
     initPlayer();
   }
 
@@ -64,15 +78,16 @@ class ListenNowState extends State<ListenNow> {
 
   @override
   Widget build(BuildContext context) {
+    print(albums);
     return Scaffold(
         appBar: AppBar(
           leading: Builder(
             builder: (context) => IconButton(
-                  icon: AnimatedIcon(
-                      icon: AnimatedIcons.menu_arrow,
-                      progress: _delegate.transitionAnimation),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                ),
+              icon: AnimatedIcon(
+                  icon: AnimatedIcons.menu_arrow,
+                  progress: _delegate.transitionAnimation),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
           ),
           title: Text("Listen Now"),
           actions: <Widget>[
@@ -88,80 +103,45 @@ class ListenNowState extends State<ListenNow> {
         ),
         drawer: Drawer(child: MyDrawer()),
         body: Container(
-            padding: new EdgeInsets.all(10.0),
+            // color: Colors.greenAccent,
+            constraints: BoxConstraints.expand(),
+            padding: EdgeInsets.zero,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                Flexible(
+                Container(
                     child: ListTile(
                         title: Text("Recent activity",
                             style: Theme.of(context).textTheme.title),
                         subtitle: Text("Recently played or added"),
                         onTap: () {},
                         trailing: HolyButton())),
-                Flexible(
-                    child: Row(
-                  children: <Widget>[
-                    Flexible(
-                        child: Card(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Flexible(
-                              child: Image(
-                            image: FileImage(File(widget.songs
-                                .where((i) => i.albumArt != null)
-                                .toList()[Random().nextInt(100)]
-                                .albumArt)),
-                            fit: BoxFit.contain,
-                          )),
-                          Text("Shuffle all")
-                        ],
-                      ),
-                    )),
-                    Flexible(
-                        child: Card(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Flexible(
-                              child: Image(
-                            image: FileImage(File(widget.songs
-                                .where((i) => i.albumArt != null)
-                                .toList()[Random().nextInt(100)]
-                                .albumArt)),
-                            fit: BoxFit.contain,
-                          )),
-                          Text("Shuffle all")
-                        ],
-                      ),
-                    )),
-                    Flexible(
-                        child: Card(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Flexible(
-                              child: Image(
-                            image: FileImage(File(widget.songs
-                                .where((i) => i.albumArt != null)
-                                .toList()[Random().nextInt(100)]
-                                .albumArt)),
-                            fit: BoxFit.contain,
-                          )),
-                          Text("Shuffle all")
-                        ],
-                      ),
-                    )),
-                  ],
-                ))
+                Container(
+                    // color: Colors.grey,
+                    height: 400,
+                    child: GridView.count(
+                      crossAxisCount: 3,
+                      childAspectRatio: 0.6,
+                      children: List.generate(
+                          6,
+                          (index) => Card(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  
+                                  children: <Widget>[
+                                     Image(
+                                      image: FileImage(
+                                          File(widget.songs[index].albumArt)),
+                                      fit: BoxFit.fitWidth,
+                                    ),
+                                    Flexible(
+                                        child: ListTile(
+                                      title: Text(widget.songs[index].title),
+                                    ))
+                                  ],
+                                ),
+                              )),
+                    ))
               ],
             )));
   }
@@ -171,11 +151,11 @@ class ListenNowState extends State<ListenNow> {
         appBar: AppBar(
           leading: Builder(
             builder: (context) => IconButton(
-                  icon: AnimatedIcon(
-                      icon: AnimatedIcons.menu_arrow,
-                      progress: _delegate.transitionAnimation),
-                  onPressed: () => Scaffold.of(context).openDrawer(),
-                ),
+              icon: AnimatedIcon(
+                  icon: AnimatedIcons.menu_arrow,
+                  progress: _delegate.transitionAnimation),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
           ),
           title: Text("Listen Now"),
           actions: <Widget>[
