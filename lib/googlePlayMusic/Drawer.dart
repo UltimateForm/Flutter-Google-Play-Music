@@ -11,7 +11,7 @@ final List<DrawerScreen> screens = [
   DrawerScreen('recents', 'Recents', Icons.settings_backup_restore),
   DrawerScreen('', 'Top charts', Icons.star),
   DrawerScreen('', 'New releases', Icons.new_releases),
-  DrawerScreen('', 'Music library', Icons.library_music),
+  DrawerScreen('musicLibrary', 'Music library', Icons.library_music),
   DrawerScreen('', 'Shop', Icons.shop)
 ];
 

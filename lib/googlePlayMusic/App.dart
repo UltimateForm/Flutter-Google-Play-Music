@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app/googlePlayMusic/AppState.dart';
 import 'package:flutter_app/googlePlayMusic/screens/listenNow/ListenNow.dart';
 import 'package:flutter_app/googlePlayMusic/screens/recents/Recents.dart';
+import 'package:flutter_app/googlePlayMusic/screens/musicLibrary/MusicLibrary.dart';
 import 'package:flute_music_player/flute_music_player.dart';
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:redux/redux.dart';
@@ -27,7 +29,7 @@ ThemeData myTheme = ThemeData(
 
 enum Actions { SetSongs, AddSong }
 
-List<Song> songsReducer(List<Song> state, dynamic action) {
+AppState appStateReducer(AppState state, dynamic action) {
   if (action == Actions.AddSong) {
     return state;
   }
@@ -46,29 +48,30 @@ Future<List<Song>> initPlayer() async {
 
 Future gpmMain() async {
   List<Song> songs = await initPlayer();
-  final _songstore = new Store<List<Song>>(songsReducer, initialState: songs);
-  runApp(App(title: "Google play music :^)", songstore: _songstore));
+  final _appStateStore = new Store<AppState>(appStateReducer, initialState: AppState(songs));
+  runApp(App(title: "Google play music :^)", appState: _appStateStore));
 }
 
 class App extends StatelessWidget {
-  final Store<List<Song>> songstore;
+  final Store<AppState> appState;
   final String title;
 
-  App({Key key, this.songstore, this.title}) : super(key: key);
+  App({Key key, this.appState, this.title}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     print("here ahaha");
-    return StoreProvider<List<Song>>(
-        store: songstore,
+    return StoreProvider<AppState>(
+        store: this.appState,
         child: MaterialApp(
           title: title,
           theme: ThemeData(primaryColor: Colors.deepOrange),
           routes: {
-            "listenNow": (BuildContext context) => ListenNow(songstore.state),
-            "recents": (BuildContext context) => Recents()
+            "listenNow": (BuildContext context) => ListenNow(this.appState.state.songs),
+            "recents": (BuildContext context) => Recents(),
+            "musicLibrary": (BuildContext context) => MusicLibrary()
           },
-          home: ListenNow(songstore.state),
+          home: ListenNow(this.appState.state.songs),
         ));
   }
 }
