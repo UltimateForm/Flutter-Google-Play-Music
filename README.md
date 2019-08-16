@@ -1,3 +1,5 @@
+![start with why](https://api.codemagic.io/apps/5d3081452783a70017bc2b77/5d3081452783a70017bc2b76/status_badge.svg)
+
 # flutter_app
 
 A new Flutter application.
